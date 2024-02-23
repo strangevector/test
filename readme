@@ -1,0 +1,5 @@
+spark.conf.set("spark.sql.extensions=org.apache.iceberg.spark. extensions. IcebergSparkSessionExtension")
+spark. conf. set("spark.sql. catalog.glue_catalog=org.apache.iceberg.spark. SparkCatalog")
+spark.conf.set("spark.sql.catalog.glue_catalog.warehouse =< S3-location-for-icebergtable>")
+spark.conf.set("spark.sql.catalog.glue_catalog.catalog-impl=org.apache.iceberg.aws.glue. GlueCatalog")
+spark.conf.set("spark.sql. catalog.glue_catalog.io-impl=org.apache.iceberg.aws.s3.S3FileI0")
