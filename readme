@@ -41,3 +41,28 @@ def stream(d, ids, duf):
         dids[i] = dids[i] + rd.choice([0, round(rd.uniform(5.0, 10.0), 2)])
         data.append((i, dids[i], tts[i], alphas[i-1]*3))
     return spark.createDataFrame(data, schema)
+
+def updaterdf(rdf, streamdf):
+    for d in streamdf.collect():
+        si = rdf.where(rdf["account_id"] == d.account_id)
+        if si.count() == 0:
+            rdf = rdf.union(spark.createDataFrame([d], schema))
+        else:
+            siy = si.where(year(si['timestamp']) == year(lit(d.timestamp)))
+            if siy.count() == 0:
+                rdf = rdf.union(spark.createDataFrame([d], schema))
+            else:
+                siym = siy.where(month(siy['timestamp']) == month(lit(d.timestamp)))
+                if siym.count() == 0:
+                    rdf = rdf.union(spark.createDataFrame([d], schema))
+                elif siym.where(rdf['timestamp'] < lit(d.timestamp)):
+                    mask = (rdf["account_id"] == lit(d.account_id)) & (year(rdf['timestamp']) == year(lit(d.timestamp))) & (month(rdf['timestamp']) == month(lit(d.timestamp)))
+                    rdf = rdf.withColumn("bill", when(mask, d.bill).otherwise(rdf["bill"])) \
+                            .withColumn("timestamp", when(mask, d.timestamp).otherwise(rdf["timestamp"]))
+    return rdf
+
+d24_1 = stream((2024, 1), range(1, 4), 1.7)
+d24_1.show()
+
+d24_2 = stream((2024, 2), range(3, 6), 1.5)
+d24_2.show()
